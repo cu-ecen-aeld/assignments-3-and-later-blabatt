@@ -14,14 +14,20 @@
 #include "writer.h"	  // my header
 
 int main(int argc, char * argv[]){
+    int ret;
     openlog("writer", 0, LOG_USER);
-    printf("Hello, World!\n");
-    syslog(LOG_NOTICE, "I got %d problems.", 99);
-    if (argc != 3)
-        return -1; // better error msg? for faulty # args...
+    syslog(LOG_NOTICE, "Invoking writer.");
+    if (argc != 3) {
+	syslog(LOG_ERR, "Invoked writer with incorrect number of arguments: %d instead of required 2.", argc-1);
+        return 1; // better error msg? for faulty # args...
+    }
     char * filetowrite = argv[1];
     char * strtowrite = argv[2];
-    writer(filetowrite, strtowrite);
+    ret = writer(filetowrite, strtowrite);
+    if ( ret == -1 ) {
+	closelog();
+	return 1;
+    }
     syslog(LOG_NOTICE, "Wrote %d characters to %s file.", (int) strlen(strtowrite),filetowrite);
     closelog();
     return 0;
@@ -29,7 +35,7 @@ int main(int argc, char * argv[]){
 
 int writer(char * file, char * str){
     int fd; ssize_t nr; ssize_t nr2; int res;
-    printf("Write %s to the file %s",str,file);
+    // printf("Write %s to the file %s",str,file);
     fd = open(file, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
     if (fd == -1) {
 	syslog(LOG_ERR, "%m: Failed to open file located at: %s", file);
@@ -42,6 +48,8 @@ int writer(char * file, char * str){
 	nr = write(fd, str, strlen(str));
 	if ( nr != -1 ) goto next ;
 	return -1;
+    } else {
+	syslog(LOG_DEBUG, "Writing %s to file %s", str, file);
     }
     next:
     if (nr != strlen(str) ) {
