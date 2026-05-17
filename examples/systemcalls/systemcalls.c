@@ -1,4 +1,9 @@
 #include "systemcalls.h"
+#include <stdlib.h>
+#include <syslog.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -16,8 +21,23 @@ bool do_system(const char *cmd)
  *   and return a boolean true if the system() call completed with success
  *   or false() if it returned a failure
 */
+    openlog("do_system", LOG_PID, LOG_USER);
+    syslog(LOG_NOTICE, "Opened log. Starting attempt to call `system`.");
 
-    return true;
+    int res = system(cmd);
+    int err = errno;
+
+    if( WIFEXITED(res) ) {
+	syslog(LOG_NOTICE, "`system` call exited correctly.");
+	return true;
+    }
+    else {
+	syslog(LOG_ERR, "Error number is ");
+	fprintf(stderr, "Failure: %s\n", strerror(err));
+	perror("do_system");
+	return false;
+    }
+
 }
 
 /**
