@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -72,25 +74,12 @@ bool do_exec(int count, ...)
             strcat(whole_cmd, " ");
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    // command[count] = command[count];
     va_end(args);
 
-/*
- * TODO:
- *   Execute a system command by calling fork, execv(),
- *   and wait instead of system (see LSP page 161).
- *   Use the command[0] as the full path to the command to execute
- *   (first argument to execv), and use the remaining arguments
- *   as second argument to the execv() command.
- *
-*/
     int status;
     pid_t pid;
     int ret;
     int err;
-    // char * arr[] = {"this", "is", "a", "test", NULL};
 
 
     openlog("do_exec", LOG_PID, LOG_USER);
@@ -147,11 +136,7 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
         command[i] = va_arg(args, char *);
     }
     command[count] = NULL;
-    // this line is to avoid a compile warning before your implementation is complete
-    // and may be removed
-    command[count] = command[count];
-
-
+    va_end(args);
 /*
  * TODO
  *   Call execv, but first using https://stackoverflow.com/a/13784315/1446624 as a refernce,
@@ -159,8 +144,50 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+    int status;
+    pid_t pid;
+    int ret;
+    int err;
+    int fd;
 
-    va_end(args);
+    openlog("do_exec", LOG_PID, LOG_USER);
+    syslog(LOG_NOTICE, "Opened log. Calling `fork`.");
+    pid = fork();
+    if( pid == -1 ) {        // fork errored
+	perror("Error invoking `fork`.");
+	syslog( LOG_ERR, "Error invoking `fork`.");
+	return false;
+    } else if ( pid == 0 ) { // we are the child
+	syslog(LOG_NOTICE, "Calling `execv` with args: %s, %s, ...",command[0],command[1]);
+	fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+	if (dup2(fd, 1) < 0) { perror("dup2"); abort(); }
+	close(fd);
+	ret = execv(command[0],command);
+	if( ret == -1 ){
+	    err = errno;
+	    fprintf(stderr,"Error invoking `execv`: %s", strerror(err) );
+	    syslog( LOG_ERR, "Error invoking `execv`.");
+	    exit(-1);
+	}
+	syslog( LOG_NOTICE, "`execv` completed with result: %d", ret);
+	return ret;
+    }
+
+    syslog(LOG_NOTICE, "Calling `wait`.");
+    pid = wait( &status );
+    if ( pid == -1 ) {
+	perror("Error waiting on child");
+	syslog(LOG_ERR, "Error waiting on child.");
+	return false;
+    }
+
+    if ( WIFEXITED(status) ) {
+	syslog(LOG_NOTICE, "Child exited sucessfully.");
+	syslog(LOG_NOTICE, "Child exit code: %d", WEXITSTATUS(status) );
+	if ( WEXITSTATUS(status) == 0 )
+	    return true;
+    }
+
 
     return true;
 }
