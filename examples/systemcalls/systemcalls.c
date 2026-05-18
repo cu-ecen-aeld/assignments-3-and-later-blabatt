@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <aio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 /**
  * @param cmd the command to execute with system()
@@ -34,7 +38,6 @@ bool do_system(const char *cmd)
     else {
 	syslog(LOG_ERR, "Error number is ");
 	fprintf(stderr, "Failure: %s\n", strerror(err));
-	perror("do_system");
 	return false;
     }
 
@@ -59,15 +62,20 @@ bool do_exec(int count, ...)
     va_list args;
     va_start(args, count);
     char * command[count+1];
+    char whole_cmd[100] = "";
     int i;
     for(i=0; i<count; i++)
     {
         command[i] = va_arg(args, char *);
+	strcat(whole_cmd, command[i]);
+        if (i < count - 1)
+            strcat(whole_cmd, " ");
     }
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
     // and may be removed
-    command[count] = command[count];
+    // command[count] = command[count];
+    va_end(args);
 
 /*
  * TODO:
@@ -78,10 +86,49 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    int status;
+    pid_t pid;
+    int ret;
+    int err;
+    // char * arr[] = {"this", "is", "a", "test", NULL};
 
-    va_end(args);
 
-    return true;
+    openlog("do_exec", LOG_PID, LOG_USER);
+    syslog(LOG_NOTICE, "Opened log. Calling `fork`.");
+    pid = fork();
+    if( pid == -1 ) {        // fork errored
+	perror("Error invoking `fork`.");
+	syslog( LOG_ERR, "Error invoking `fork`.");
+	return false;
+    } else if ( pid == 0 ) { // we are the child
+	syslog(LOG_NOTICE, "Calling `execv` with args: %s, %s, ...",command[0],whole_cmd);
+	ret = execv(command[0],command);
+	if( ret == -1 ){
+	    err = errno;
+	    fprintf(stderr,"Error invoking `execv`: %s", strerror(err) );
+	    syslog( LOG_ERR, "Error invoking `execv`.");
+	    exit(-1);
+	}
+	syslog( LOG_NOTICE, "`execv` completed with result: %d", ret);
+	return ret;
+    }
+
+    syslog(LOG_NOTICE, "Calling `wait`.");
+    pid = wait( &status );
+    if ( pid == -1 ) {
+	perror("Error waiting on child");
+	syslog(LOG_ERR, "Error waiting on child.");
+	return false;
+    }
+
+    if ( WIFEXITED(status) ) {
+	syslog(LOG_NOTICE, "Child exited sucessfully.");
+	syslog(LOG_NOTICE, "Child exit code: %d", WEXITSTATUS(status) );
+	if ( WEXITSTATUS(status) == 0 )
+	    return true;
+    }
+
+    return false;
 }
 
 /**
