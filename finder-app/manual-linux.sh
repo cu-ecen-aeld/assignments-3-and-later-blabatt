@@ -25,7 +25,7 @@ mkdir -p ${OUTDIR}
 
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/linux-stable" ]; then
-    #Clone only if the repository does not exist.
+	# 1.c(i)(1): Clone only if the repository does not exist.
 	echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
 	git clone ${KERNEL_REPO} --depth 1 --single-branch --branch ${KERNEL_VERSION}
 fi
@@ -34,10 +34,11 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     echo "Checking out version ${KERNEL_VERSION}"
     git checkout ${KERNEL_VERSION}
 
-    # TODO: Add your kernel build steps here
+    # TODO 1.c: Build kernel
 fi
 
 echo "Adding the Image in outdir"
+# TODO 1.d: cp built files (per 1.c above) into OUTDIR (if not already done in 1.c)
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
@@ -47,7 +48,7 @@ then
     sudo rm  -rf ${OUTDIR}/rootfs
 fi
 
-# TODO: Create necessary base directories
+# TODO 1.e: Create necessary base directories
 
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
@@ -55,7 +56,7 @@ then
 git clone git://busybox.net/busybox.git
     cd busybox
     git checkout ${BUSYBOX_VERSION}
-    # TODO:  Configure busybox
+    # TODO: Configure busybox
 else
     cd busybox
 fi
@@ -70,11 +71,13 @@ ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
 # TODO: Make device nodes
 
-# TODO: Clean and build the writer utility
+# TODO 1.f: Clean and build the writer utility
 
-# TODO: Copy the finder related scripts and executables to the /home directory
+# TODO 1.f: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
+
+# TODO 1.g: cp `autorun-qemu.sh` into OUTDIR/rootfs/home
 
 # TODO: Chown the root directory
 
-# TODO: Create initramfs.cpio.gz
+# TODO 1.h: Create initramfs.cpio.gz
