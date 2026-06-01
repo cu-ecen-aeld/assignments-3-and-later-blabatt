@@ -1,0 +1,78 @@
+layout cwd="." {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+    tab name="edit" cwd="./finder-app/" {
+		pane split_direction="vertical" {
+			pane name="assignment" size="50%" cwd="." focus=true {
+				command "nvim"
+				args "manual-linux.sh"
+			}
+			pane stacked=true size="50%" {
+				pane name="shell" cwd="../"
+				pane name="test" cwd="." {
+					command "nvim"
+					args "finder-test.sh"
+				}
+				pane name="src(old)" cwd="../" {
+					command "nvim"
+					args "examples/systemcalls/systemcalls.c" "finder-app/writer.c" "finder-app/writer.h" "conf/username.txt" "conf/assignment.txt"
+				}
+				pane name="layout" cwd="../" {
+					command "nvim"
+					args "layout.kdl"
+				}
+			}
+		}
+	}
+    tab name="man" {
+		pane name="man" cwd="." {
+			command "man"
+			args "qemu"
+		}
+	}
+    tab name="linux-src" cwd="~/Projects/open-source/linux-kernel" {
+		pane split_direction="vertical" {
+			pane name="git" size="50%" cwd="." {
+				command "git"
+				args "tag" "-l"
+			}
+			pane name="shell" focus=true cwd="."
+		}
+    }
+    tab name="btop" cwd="." {
+		pane name="btop" {
+			command "btop"
+		}
+	}
+    tab name="old" cwd="../" {
+		pane split_direction="vertical" {
+			pane name="assignment-2" cwd="./assignment-2-blabatt"
+			pane name="assignment-3-part-1" cwd="./assignment-3-blabatt"
+		}
+	}
+    tab name="course" cwd="../course-notes" {
+		pane split_direction="vertical" {
+			pane name="contents" {
+				command "ls"
+			}
+			pane name="shell"
+		}
+	}
+    tab name="tool" cwd="/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/" {
+		pane split_direction="vertical" {
+			pane name="toolchain" {
+				command "aarch64-none-linux-gnu-gcc"
+				args "-print-sysroot" "-v"
+			}
+			pane name="shell"
+		}
+	}
+}
+
