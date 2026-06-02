@@ -65,7 +65,7 @@ layout cwd="." {
 			pane name="shell"
 		}
 	}
-    tab name="tool" cwd="/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/" {
+    tab name="toolchain" cwd="/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/" {
 		pane split_direction="vertical" {
 			pane name="toolchain" {
 				command "aarch64-none-linux-gnu-gcc"
