@@ -12,6 +12,7 @@ BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
+SYSROOT=/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu
 
 if [ $# -lt 1 ]
 then
@@ -67,30 +68,40 @@ git clone git://busybox.net/busybox.git
     make distclean
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
-    # make install # necessary???
+    make CONFIG_PREFIX=${ROOTFS} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 else
     cd busybox
 fi
-
-# Install busybox
-cp ${OUTDIR}/busybox/busybox ${OUTDIR}/bin
-
 
 echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
-# TODO: Add library dependencies to rootfs
+# Add library dependencies to rootfs
+cd ${SYSROOT}/libc
+for f in lib/ld-linux-aarch64.so.1 lib64/libm.so.6 lib64/libresolv.so.2 lib64/libc.so.6 ; do
+	cp --parents $f ${ROOTFS}
+done
 
-# TODO: Make device nodes (is necessary for assigment 3p2?)
+# TODO: Make device nodes (is this really necessary for assigment 3p2?)
 
-# TODO 1.f: Clean and build the writer utility
+# 1.f: Clean and build the writer utility
+cd ${FINDER_APP_DIR}
+make clean
+make writer
+make DEST=${OUTDIR}/bin install
 
-# TODO 1.f: Copy the finder related scripts and executables to the /home directory
+# 1.f: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
+# 1.g: cp `autorun-qemu.sh` into OUTDIR/rootfs/home
+for f in start-qemu-app.sh start-qemu-terminal.sh finder-test.sh autorun-qemu.sh ; do
+	cp $f ${ROOTFS}/home
+done
 
-# TODO 1.g: cp `autorun-qemu.sh` into OUTDIR/rootfs/home
+# Chown the root directory
+cd ${ROOTFS}
+sudo chown -R root:root *
 
-# TODO: Chown the root directory
-
-# TODO 1.h: Create initramfs.cpio.gz
+# 1.h: Create initramfs.cpio.gz
+find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
+gzip -f initramfs.cpio

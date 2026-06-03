@@ -74,5 +74,11 @@ layout cwd="." {
 			pane name="shell"
 		}
 	}
+    tab name="busybox" cwd="~/Projects/open-source/busybox" {
+		pane name="shell"
+	}
+    tab name="writer" cwd="./finder-app" {
+		pane name="shell"
+	}
 }
 
