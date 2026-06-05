@@ -13,6 +13,7 @@ FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
 CROSS_COMPILE=aarch64-none-linux-gnu-
 SYSROOT=/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu
+INITRAM_FILE=initramfs.cpio
 
 if [ $# -lt 1 ]
 then
@@ -44,6 +45,7 @@ fi
 
 # 1.d: cp built files (per 1.c above) into OUTDIR (if not already done in 1.c)
 echo "Adding the Image in outdir"
+cd "$OUTDIR"
 cp linux-stable/arch/${ARCH}/boot/Image .
 
 echo "Creating the staging directory for the root filesystem"
@@ -52,6 +54,7 @@ if [ -d "${OUTDIR}/rootfs" ]
 then
     echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
     sudo rm  -rf ${OUTDIR}/rootfs
+    rm ${OUTDIR}/${INITRAM_FILE}.gz
 fi
 
 # 1.e: Create necessary base directories
@@ -61,7 +64,7 @@ mkdir -p ${ROOTFS} ${ROOTFS}/bin ${ROOTFS}/dev ${ROOTFS}/etc ${ROOTFS}/home ${RO
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
 then
-    git clone https://git.busybox.net/busybox.git #git://busybox.net/busybox.git
+    git clone git://busybox.net/busybox.git # https://git.busybox.net/busybox.git #git://busybox.net/busybox.git
     cd busybox
     git checkout ${BUSYBOX_VERSION}
 else
@@ -109,6 +112,6 @@ cd ${ROOTFS}
 sudo chown -R root:root *
 
 # 1.h: Create initramfs.cpio.gz
-find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
+find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/${INITRAM_FILE}
 cd ${OUTDIR}
-gzip -f initramfs.cpio
+gzip -f ${INITRAM_FILE}

@@ -8,8 +8,10 @@ install:
 	mkdir -p $(DEST)
 	cp $(BUILD)/writer.o $(DEST)/writer
 	cp writer.sh $(DEST)/
+	cp finder.sh $(DEST)/
 	chmod 744 $(DEST)/writer
 	chmod 744 $(DEST)/writer.sh
+	chmod 744 $(DEST)/finder.sh
 
 clean:
 	rm $(BUILD)/writer.o
