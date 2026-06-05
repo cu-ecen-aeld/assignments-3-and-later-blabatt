@@ -42,8 +42,9 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} dtbs
 fi
 
-echo "Adding the Image in outdir"
 # 1.d: cp built files (per 1.c above) into OUTDIR (if not already done in 1.c)
+echo "Adding the Image in outdir"
+cp linux-stable/arch/${ARCH}/boot/Image .
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
@@ -60,25 +61,28 @@ mkdir -p ${ROOTFS} ${ROOTFS}/bin ${ROOTFS}/dev ${ROOTFS}/etc ${ROOTFS}/home ${RO
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
 then
-git clone git://busybox.net/busybox.git
+    git clone https://git.busybox.net/busybox.git #git://busybox.net/busybox.git
     cd busybox
     git checkout ${BUSYBOX_VERSION}
-
-    # Configure & build busybox
-    make distclean
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
-    make CONFIG_PREFIX=${ROOTFS} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 else
     cd busybox
 fi
 
+# Configure & build busybox
+make distclean
+make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
+make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
+make CONFIG_PREFIX=${ROOTFS} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
+
 echo "Library dependencies"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
+cd "$ROOTFS"
+echo "PWD: " $(pwd)
+${CROSS_COMPILE}readelf -a ./bin/busybox | grep "program interpreter"
+${CROSS_COMPILE}readelf -a ./bin/busybox | grep "Shared library"
 
 # Add library dependencies to rootfs
 cd ${SYSROOT}/libc
+# this list is hardcoded ... prefer automatic gen from above grep commands
 for f in lib/ld-linux-aarch64.so.1 lib64/libm.so.6 lib64/libresolv.so.2 lib64/libc.so.6 ; do
 	cp --parents $f ${ROOTFS}
 done
@@ -87,15 +91,17 @@ done
 
 # 1.f: Clean and build the writer utility
 cd ${FINDER_APP_DIR}
+echo "PWD: $(pwd)"
 make clean
 make writer
-make DEST=${OUTDIR}/bin install
+make DEST=${ROOTFS}/home install
 
 # 1.f: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
 # 1.g: cp `autorun-qemu.sh` into OUTDIR/rootfs/home
-for f in start-qemu-app.sh start-qemu-terminal.sh finder-test.sh autorun-qemu.sh ; do
-	cp $f ${ROOTFS}/home
+mkdir -p ${ROOTFS}/home/conf
+for f in start-qemu-app.sh start-qemu-terminal.sh finder-test.sh autorun-qemu.sh conf/username.txt conf/assignment.txt ; do
+	cp --parents $f ${ROOTFS}/home
 done
 
 # Chown the root directory
@@ -104,4 +110,5 @@ sudo chown -R root:root *
 
 # 1.h: Create initramfs.cpio.gz
 find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
+cd ${OUTDIR}
 gzip -f initramfs.cpio
