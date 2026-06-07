@@ -80,5 +80,8 @@ layout cwd="." {
     tab name="writer" cwd="./finder-app" {
 		pane name="shell"
 	}
+    tab name="runner" cwd="~/Projects/open-source/actions-runner" {
+		pane name="shell"
+	}
 }
 

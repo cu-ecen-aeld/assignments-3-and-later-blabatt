@@ -6,13 +6,18 @@ set -e
 set -u
 
 OUTDIR=/tmp/aeld
+ROOTFS=${OUTDIR}/rootfs
 KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 KERNEL_VERSION=v5.15.163
 BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
-CROSS_COMPILE=aarch64-none-linux-gnu-
-SYSROOT=/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu
+TRIPLE=aarch64-none-linux-gnu
+CROSS_COMPILE=${TRIPLE}-
+#arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu
+TOOLCHAIN_VERSION=15.2.rel1
+TOOLCHAIN=arm-gnu-toolchain-${TOOLCHAIN_VERSION}-x86_64-${TRIPLE}
+SYSROOT=${OUTDIR}/${TOOLCHAIN}/${TRIPLE}
 INITRAM_FILE=initramfs.cpio
 
 if [ $# -lt 1 ]
@@ -23,9 +28,17 @@ else
 	echo "Using passed directory ${OUTDIR} for output"
 fi
 
-mkdir -p ${OUTDIR}
-
 cd "$OUTDIR"
+
+echo "Setting up Toolchain"
+if [ ! -d "${SYSROOT}" ]; then
+	echo "Installating ${TOOLCHAIN} into ${OUTDIR}"
+	wget https://developer.arm.com/-/media/Files/downloads/gnu/${TOOLCHAIN_VERSION}/binrel/${TOOLCHAIN}.tar.xz
+	mkdir -p ${SYSROOT}
+	tar xJf ${TOOLCHAIN}.tar.xz -C . # ${SYSROOT}
+	export PATH=${SYSROOT}:$PATH
+fi
+
 if [ ! -d "${OUTDIR}/linux-stable" ]; then
 	# 1.c(i)(1): Clone only if the repository does not exist.
 	echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
@@ -50,21 +63,35 @@ cp linux-stable/arch/${ARCH}/boot/Image .
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
-if [ -d "${OUTDIR}/rootfs" ]
+if [ -d "${ROOTFS}" ]
 then
-    echo "Deleting rootfs directory at ${OUTDIR}/rootfs and starting over"
-    sudo rm  -rf ${OUTDIR}/rootfs
-    rm ${OUTDIR}/${INITRAM_FILE}.gz
+    echo "Deleting rootfs directory at ${ROOTFS} and starting over"
+    sudo rm -rf ${ROOTFS}
+    sudo rm -f ${OUTDIR}/${INITRAM_FILE}.gz
 fi
 
 # 1.e: Create necessary base directories
-ROOTFS=${OUTDIR}/rootfs
+mkdir -p ${ROOTFS}
 mkdir -p ${ROOTFS} ${ROOTFS}/bin ${ROOTFS}/dev ${ROOTFS}/etc ${ROOTFS}/home ${ROOTFS}/lib ${ROOTFS}/lib64 ${ROOTFS}/proc ${ROOTFS}/sbin ${ROOTFS}/sys ${ROOTFS}/tmp ${ROOTFS}/usr ${ROOTFS}/var ${ROOTFS}/usr/bin ${ROOTFS}/usr/sbin ${ROOTFS}/usr/lib ${ROOTFS}/var/log
 
 cd "$OUTDIR"
 if [ ! -d "${OUTDIR}/busybox" ]
 then
-    git clone git://busybox.net/busybox.git # https://git.busybox.net/busybox.git #git://busybox.net/busybox.git
+	attempts=0
+	max_attempts=5
+
+	until [ $attempts -ge $max_attempts ] || git clone git://busybox.net/busybox.git # https://git.busybox.net/busybox.git #git://busybox.net/busybox.git
+	do
+	    attempts=$((attempts+1))
+	    echo "Attempt $attempts failed. Retrying..."
+	    sleep 2
+	done
+
+	# Verify why the loop terminated
+	if [ $attempts -ge $max_attempts ]; then
+	    echo "Failed to clone busybox after $max_attempts attempts."
+	    exit 1
+	fi
     cd busybox
     git checkout ${BUSYBOX_VERSION}
 else
@@ -85,6 +112,7 @@ ${CROSS_COMPILE}readelf -a ./bin/busybox | grep "Shared library"
 
 # Add library dependencies to rootfs
 cd ${SYSROOT}/libc
+echo "PWD: " $(pwd)
 # this list is hardcoded ... prefer automatic gen from above grep commands
 for f in lib/ld-linux-aarch64.so.1 lib64/libm.so.6 lib64/libresolv.so.2 lib64/libc.so.6 ; do
 	cp --parents $f ${ROOTFS}
