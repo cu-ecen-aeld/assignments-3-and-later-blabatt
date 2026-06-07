@@ -106,17 +106,23 @@ make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE}
 make CONFIG_PREFIX=${ROOTFS} ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 
 echo "Library dependencies"
-cd "$ROOTFS"
+# sed -i 's/# CONFIG_STATIC is not set/CONFIG_STATIC=y/' .config
+# grep -q "CONFIG_STATIC=y" .config || echo "CONFIG_STATIC=y" >> .config
+
+cd "${ROOTFS}"
 echo "PWD: " $(pwd)
 ${CROSS_COMPILE}readelf -a ./bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a ./bin/busybox | grep "Shared library"
 
 # Add library dependencies to rootfs
-cd ${SYSROOT}/libc
-echo "PWD: " $(pwd)
+# cd ${SYSROOT}
+# echo "PWD: " $(pwd)
 # this list is hardcoded ... prefer automatic gen from above grep commands
-for f in lib/ld-linux-aarch64.so.1 lib64/libm.so.6 lib64/libresolv.so.2 lib64/libc.so.6 ; do
-	cp --parents $f ${ROOTFS}
+# for f in ld-linux-aarch64.so.1 libm.so.6 libresolv.so.2 libc.so.6 ; do
+# 	cp --parents $(find ${SYSROOT} -type f -name "$f") ${ROOTFS}
+# done
+for f in ld-linux-aarch64.so.1 libm.so.6 libresolv.so.2 libc.so.6 ; do
+	cp --parents $(find ${SYSROOT} -type f -name "$f") "${ROOTFS}"
 done
 
 # TODO: Make device nodes (is this really necessary for assigment 3p2?)
