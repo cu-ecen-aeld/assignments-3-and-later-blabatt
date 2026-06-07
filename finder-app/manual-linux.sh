@@ -28,6 +28,7 @@ else
 	echo "Using passed directory ${OUTDIR} for output"
 fi
 
+mkdir -p ${OUTDIR}
 cd "$OUTDIR"
 
 echo "Setting up Toolchain"
