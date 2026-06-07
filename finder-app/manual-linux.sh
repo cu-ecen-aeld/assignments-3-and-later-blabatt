@@ -96,7 +96,7 @@ done
 cd ${FINDER_APP_DIR}
 echo "PWD: $(pwd)"
 make clean
-make writer
+make CROSS_COMPILE=${CROSS_COMPILE} writer
 make DEST=${ROOTFS}/home install
 
 # 1.f: Copy the finder related scripts and executables to the /home directory
