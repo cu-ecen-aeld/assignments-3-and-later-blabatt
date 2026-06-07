@@ -15,9 +15,11 @@ ARCH=arm64
 TRIPLE=aarch64-none-linux-gnu
 CROSS_COMPILE=${TRIPLE}-
 #arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu
-TOOLCHAIN_VERSION=15.2.rel1
-TOOLCHAIN=arm-gnu-toolchain-${TOOLCHAIN_VERSION}-x86_64-${TRIPLE}
-SYSROOT=${OUTDIR}/${TOOLCHAIN}/${TRIPLE}
+# TOOLCHAIN_VERSION=15.2.rel1
+# TOOLCHAIN=arm-gnu-toolchain-${TOOLCHAIN_VERSION}-x86_64-${TRIPLE}
+# SYSROOT=${OUTDIR}/${TOOLCHAIN}/${TRIPLE}
+SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
+# /opt/arm-gnu-toolchain-13.3.rel1-x86_64-${TRIPLE}/${TRIPLE}
 INITRAM_FILE=initramfs.cpio
 
 if [ $# -lt 1 ]
@@ -31,14 +33,14 @@ fi
 mkdir -p ${OUTDIR}
 cd "$OUTDIR"
 
-echo "Setting up Toolchain"
-if [ ! -d "${SYSROOT}" ]; then
-	echo "Installating ${TOOLCHAIN} into ${OUTDIR}"
-	wget https://developer.arm.com/-/media/Files/downloads/gnu/${TOOLCHAIN_VERSION}/binrel/${TOOLCHAIN}.tar.xz
-	mkdir -p ${SYSROOT}
-	tar xJf ${TOOLCHAIN}.tar.xz -C . # ${SYSROOT}
-	export PATH=${SYSROOT}:$PATH
-fi
+# echo "Setting up Toolchain"
+# if [ ! -d "${SYSROOT}" ]; then
+# 	echo "Installating ${TOOLCHAIN} into ${OUTDIR}"
+# 	wget https://developer.arm.com/-/media/Files/downloads/gnu/${TOOLCHAIN_VERSION}/binrel/${TOOLCHAIN}.tar.xz
+# 	mkdir -p ${SYSROOT}
+# 	tar xJf ${TOOLCHAIN}.tar.xz -C . # ${SYSROOT}
+# 	export PATH=${SYSROOT}:$PATH
+# fi
 
 if [ ! -d "${OUTDIR}/linux-stable" ]; then
 	# 1.c(i)(1): Clone only if the repository does not exist.
@@ -121,9 +123,16 @@ ${CROSS_COMPILE}readelf -a ./bin/busybox | grep "Shared library"
 # for f in ld-linux-aarch64.so.1 libm.so.6 libresolv.so.2 libc.so.6 ; do
 # 	cp --parents $(find ${SYSROOT} -type f -name "$f") ${ROOTFS}
 # done
-for f in ld-linux-aarch64.so.1 libm.so.6 libresolv.so.2 libc.so.6 ; do
-	cp --parents $(find ${SYSROOT} -type f -name "$f") "${ROOTFS}"
-done
+# cd "${SYSROOT}/libc"
+# for f in ld-linux-aarch64.so.1 libm.so.6 libresolv.so.2 libc.so.6 ; do
+# 	cp --parents $(find "${SYSROOT}/libc" -type f -name "$f") "${ROOTFS}"
+# done
+cp -a "${SYSROOT}/lib/ld-linux-aarch64.so.1" "${ROOTFS}/lib/"
+
+cp -a "${SYSROOT}/lib64/libm.so.6" "${ROOTFS}/lib64/"
+cp -a "${SYSROOT}/lib64/libresolv.so.2" "${ROOTFS}/lib64/"
+cp -a "${SYSROOT}/lib64/libc.so.6" "${ROOTFS}/lib64/"
+
 
 # TODO: Make device nodes (is this really necessary for assigment 3p2?)
 
