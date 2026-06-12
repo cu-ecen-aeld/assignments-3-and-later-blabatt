@@ -8,27 +8,34 @@ layout cwd="." {
             plugin location="zellij:status-bar"
         }
     }
-    tab name="edit" cwd="./finder-app/" {
+    tab name="edit"  {
 		pane split_direction="vertical" {
 			pane name="assignment" size="50%" cwd="." focus=true {
 				command "nvim"
-				args "manual-linux.sh"
+				args "examples/threading/threading.c" "examples/threading/threading.h"
 			}
 			pane stacked=true size="50%" {
-				pane name="shell" cwd="../"
+				pane name="shell" expanded=true cwd="../"
 				pane name="test" cwd="." {
 					command "nvim"
-					args "finder-test.sh"
+					args "assignment-autotest/test/assignment4/Test_threading.c" "assignment-autotest/test/assignment4/assignment-test.sh" "unit-test.sh" "finder-app/finder-test.sh"
 				}
-				pane name="src(old)" cwd="../" {
+				pane name="src" cwd="./finder-app/" {
 					command "nvim"
-					args "examples/systemcalls/systemcalls.c" "finder-app/writer.c" "finder-app/writer.h" "conf/username.txt" "conf/assignment.txt"
+					args "manual-linux.sh" "../examples/systemcalls/systemcalls.c" "writer.c" "writer.h" "writer.sh" "../conf/username.txt" "../conf/assignment.txt"
 				}
-				pane name="layout" cwd="../" {
+				pane name="layout" cwd="." {
 					command "nvim"
 					args "layout.kdl"
 				}
 			}
+		}
+	}
+    tab name="old" cwd="../" {
+		pane stacked=true size="50%" {
+			pane name="assignment-1" cwd="./assignment-1-blabatt"
+			pane name="assignment-2" cwd="./assignment-2-blabatt"
+			pane name="assignment-3" cwd="./assignment-3-blabatt"
 		}
 	}
     tab name="man" {
@@ -46,24 +53,8 @@ layout cwd="." {
 			pane name="shell" focus=true cwd="."
 		}
     }
-    tab name="btop" cwd="." {
-		pane name="btop" {
-			command "btop"
-		}
-	}
-    tab name="old" cwd="../" {
-		pane split_direction="vertical" {
-			pane name="assignment-2" cwd="./assignment-2-blabatt"
-			pane name="assignment-3-part-1" cwd="./assignment-3-blabatt"
-		}
-	}
-    tab name="course" cwd="../course-notes" {
-		pane split_direction="vertical" {
-			pane name="contents" {
-				command "ls"
-			}
-			pane name="shell"
-		}
+    tab name="busybox" cwd="~/Projects/open-source/busybox" {
+		pane name="shell"
 	}
     tab name="toolchain" cwd="/opt/arm-gnu-toolchain-13.3.rel1-x86_64-aarch64-none-linux-gnu/aarch64-none-linux-gnu/" {
 		pane split_direction="vertical" {
@@ -74,11 +65,18 @@ layout cwd="." {
 			pane name="shell"
 		}
 	}
-    tab name="busybox" cwd="~/Projects/open-source/busybox" {
-		pane name="shell"
+    tab name="btop" cwd="." {
+		pane name="btop" {
+			command "btop"
+		}
 	}
-    tab name="writer" cwd="./finder-app" {
-		pane name="shell"
+    tab name="course" cwd="../course-notes" {
+		pane split_direction="vertical" {
+			pane name="contents" {
+				command "ls"
+			}
+			pane name="shell"
+		}
 	}
     tab name="runner" cwd="~/Projects/open-source/actions-runner" {
 		pane name="shell"
