@@ -15,7 +15,7 @@ layout cwd="." {
 				args "examples/threading/threading.c" "examples/threading/threading.h"
 			}
 			pane stacked=true size="50%" {
-				pane name="shell" expanded=true cwd="../"
+				pane name="shell" expanded=true cwd="."
 				pane name="test" cwd="." {
 					command "nvim"
 					args "assignment-autotest/test/assignment4/Test_threading.c" "assignment-autotest/test/assignment4/assignment-test.sh" "unit-test.sh" "finder-app/finder-test.sh"
