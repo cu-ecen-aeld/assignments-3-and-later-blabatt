@@ -1,4 +1,4 @@
-BUILD := ../build
+BUILD ?= .
 DEST ?= ${BUILD}
 
 default writer: writer.c
