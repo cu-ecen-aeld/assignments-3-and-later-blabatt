@@ -1,10 +1,12 @@
+# CROSS_COMPILE ?= aarch64-none-linux-gnu-gcc # shouldn't need this from buildroot if using $(CC)
 BUILD ?= .
 DEST ?= ${BUILD}
+CC ?= $(CROSS_COMPILE)gcc
 
 default writer: writer.c
-	$(CROSS_COMPILE)gcc -g -Wall -c -o $(BUILD)/writer.o writer.c
-	$(CROSS_COMPILE)gcc -g -Wall -I/ $(BUILD)/writer.o -o $(BUILD)/writer
-	# $(CROSS_COMPILE)gcc -g -Wall -c -o $(BUILD)/writer.o writer.c
+	$(CC) $(CFLAGS) $(INCLUDES) -g -Wall -c -o $(BUILD)/writer.o writer.c
+	$(CC) $(CFLAGS) $(INCLUDES) -g -Wall -I/ $(BUILD)/writer.o -o $(BUILD)/writer
+	# $(CC) -g -Wall -c -o $(BUILD)/writer.o writer.c
 
 install:
 	mkdir -p $(DEST)
