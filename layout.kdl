@@ -8,17 +8,21 @@ layout cwd="." {
             plugin location="zellij:status-bar"
         }
     }
-    tab name="edit" cwd="./finder-app/" {
+    tab name="edit" cwd="./server/" {
 		pane split_direction="vertical" {
 			pane name="assignment" size="50%" cwd="." focus=true {
 				command "nvim"
-				args "manual-linux.sh"
+				args "aesdsocket.c"
 			}
 			pane stacked=true size="50%" {
 				pane name="shell" cwd="../"
 				pane name="test" cwd="." {
 					command "nvim"
-					args "finder-test.sh"
+					args "sockettest.sh"
+				}
+				pane name="make" cwd="." {
+					command "nvim"
+					args "Makefile"
 				}
 				pane name="src(old)" cwd="../" {
 					command "nvim"
@@ -54,7 +58,7 @@ layout cwd="." {
     tab name="old" cwd="../" {
 		pane split_direction="vertical" {
 			pane name="assignment-2" cwd="./assignment-2-blabatt"
-			pane name="assignment-3-part-1" cwd="./assignment-3-blabatt"
+			pane name="assignment-3-part-1" cwd="./assignment-3-blair"
 		}
 	}
     tab name="course" cwd="../course-notes" {
@@ -77,7 +81,7 @@ layout cwd="." {
     tab name="busybox" cwd="~/Projects/open-source/busybox" {
 		pane name="shell"
 	}
-    tab name="writer" cwd="./finder-app" {
+    tab name="finder" cwd="./finder-app" {
 		pane name="shell"
 	}
     tab name="runner" cwd="~/Projects/open-source/actions-runner" {
